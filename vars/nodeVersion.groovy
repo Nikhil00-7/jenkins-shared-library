@@ -6,7 +6,7 @@ def call(String  nodeVersion= "node22"){
         angent any 
 
         tools {
-            node "${nodeVersion}"
+            nodejs "${nodeVersion}"
         }
 
         stages{
