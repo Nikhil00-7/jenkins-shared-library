@@ -3,7 +3,7 @@ def call(String  nodeVersion= "node22"){
 
     pipeline {
 
-        angent any 
+        agent any 
 
         tools {
             nodejs "${nodeVersion}"
@@ -11,7 +11,9 @@ def call(String  nodeVersion= "node22"){
 
         stages{
             stage("Version"){
+                steps{
              echo "This pipeline is running on Version ${nodeVersion}"
+            }
             }
         }
     }
