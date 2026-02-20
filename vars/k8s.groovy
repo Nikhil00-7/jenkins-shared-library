@@ -1,4 +1,4 @@
-def call (String k8s-cred= , String k8s-ip=  ){
+def call (String k8s-cred= "k8s-master-ssh" , String k8s-ip= "192.168.2.20" ){
     
     echo "copying files in k8s-VM"
     
