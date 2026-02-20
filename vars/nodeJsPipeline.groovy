@@ -8,14 +8,26 @@ def call(Map config = [:]) {
             nodejs config.nodeVersion ?: 'node22'
         }
 
+        // Set default static env vars if you want (optional)
         environment {
-            DOCKER_USER  = config.dockerUser ?: "docdon0007"
-            IMAGE        = config.image ?: "jenkins"
-            TAG          = config.tag ?: "01"
-            DOCKER_IMAGE = "${DOCKER_USER}/${IMAGE}:${TAG}"
+            PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         }
 
         stages {
+
+            stage('Set Environment') {
+                steps {
+                    script {
+                        // Assign dynamic environment variables safely
+                        env.DOCKER_USER  = config.dockerUser ?: "docdon0007"
+                        env.IMAGE        = config.image ?: "jenkins"
+                        env.TAG          = config.tag ?: "01"
+                        env.DOCKER_IMAGE = "${env.DOCKER_USER}/${env.IMAGE}:${env.TAG}"
+                        env.K8S_IP       = config.k8sIp
+                        env.EMAIL        = config.email ?: "kujurnikhil0007@gmail.com"
+                    }
+                }
+            }
 
             stage('Checkout code') {
                 steps {
@@ -59,8 +71,8 @@ def call(Map config = [:]) {
                 steps {
                     sshagent([config.k8sCreds ?: 'k8s-master-ssh']) {
                         sh """
-                          scp -o StrictHostKeyChecking=no jenkinsOne.yaml ubuntu@${config.k8sIp}:/home/ubuntu/
-                          scp -o StrictHostKeyChecking=no service.yaml ubuntu@${config.k8sIp}:/home/ubuntu/
+                          scp -o StrictHostKeyChecking=no jenkinsOne.yaml ubuntu@${env.K8S_IP}:/home/ubuntu/
+                          scp -o StrictHostKeyChecking=no service.yaml ubuntu@${env.K8S_IP}:/home/ubuntu/
                         """
                     }
                 }
@@ -70,8 +82,8 @@ def call(Map config = [:]) {
                 steps {
                     sshagent([config.k8sCreds ?: 'k8s-master-ssh']) {
                         sh """
-                          ssh -o StrictHostKeyChecking=no ubuntu@${config.k8sIp} "kubectl apply -f /home/ubuntu/jenkinsOne.yaml"
-                          ssh -o StrictHostKeyChecking=no ubuntu@${config.k8sIp} "kubectl apply -f /home/ubuntu/service.yaml"
+                          ssh -o StrictHostKeyChecking=no ubuntu@${env.K8S_IP} "kubectl apply -f /home/ubuntu/jenkinsOne.yaml"
+                          ssh -o StrictHostKeyChecking=no ubuntu@${env.K8S_IP} "kubectl apply -f /home/ubuntu/service.yaml"
                         """
                     }
                 }
@@ -81,7 +93,7 @@ def call(Map config = [:]) {
         post {
             success {
                 emailext(
-                    to: config.email ?: "kujurnikhil0007@gmail.com",
+                    to: env.EMAIL,
                     subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                     body: """
 Build Successful!
@@ -94,7 +106,7 @@ Build URL: ${env.BUILD_URL}
             }
             failure {
                 emailext(
-                    to: config.email ?: "kujurnikhil0007@gmail.com",
+                    to: env.EMAIL,
                     subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                     body: """
 Build Failed!
