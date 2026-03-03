@@ -1,3 +1,9 @@
-def call(String  repoUrl , String branch='main'){
-    git branch:  branch , url: repoUrl
+def call(Map config=[:]){
+    String branch = confg.get('branch' , 'main') 
+    Strign url  = config.get('url') 
+      if(!url){
+        error  "Git URL is required"
+      }
+        
+    git branch: branch , url: url 
 }
